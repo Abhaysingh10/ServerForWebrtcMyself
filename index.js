@@ -1,6 +1,8 @@
+const console = require("console");
 const { Socket } = require("dgram");
 const express = require("express");
 var http  = require("http");
+const { emit } = require("process");
 const app = express().use(express.static(__dirname + '/'));
 const port = process.env.PORT || 5000;
 var server = http.createServer(app);
@@ -9,12 +11,36 @@ var io = require("socket.io")(server);
 
 app.use(express.json());
 
+var clients = {};
+list users = [];
+
 
 io.on("connection", (socket) =>{
+    socket.emit("remoteConnection", socket.id);
     console.log("Connected");
-    console.log(socket.id, " jas joined");
+    //console.log("This is Socket -> ",socket);
     socket.on("/test", (msg) => {
             console.log(msg);
+            
+    })
+    socket.on("connection", (id) =>{
+      console.log(id, " has joined");
+      socket.emit("connectionResponse", users);
+      clients[id] = socket;
+    //  console.log(clients);
+        users.push(id);
+      socket.emit("OnlineUsers", users );
+    } )
+    socket.on("disconnectt", (userId) => {
+      console.log("Request to remove -> ");
+       let indexx = users.findIndex(userId);
+       console.log(indexx);
+       users.splice(indexx, 1);
+       socket.emit("RefreshResponse", users);
+    });
+    socket.on("refresh",()=> {
+      console.log("Refreshing")
+      socket.emit("RefreshResponse", users);
     })
 });
 
