@@ -12,7 +12,7 @@ var io = require("socket.io")(server);
 app.use(express.json());
 
 var clients = {};
-list users = [];
+var users = [];
 
 
 io.on("connection", (socket) =>{
@@ -29,13 +29,17 @@ io.on("connection", (socket) =>{
       clients[id] = socket;
     //  console.log(clients);
         users.push(id);
-      socket.emit("OnlineUsers", users );
-    } )
+    })
+    socket.on("offer", (data)=>{
+      console.log(data);
+    })
+
     socket.on("disconnectt", (userId) => {
       console.log("Request to remove -> ");
-       let indexx = users.findIndex(userId);
-       console.log(indexx);
-       users.splice(indexx, 1);
+      //  let indexx = users.findIndex(userId);
+      //  console.log(indexx);
+      //  users.splice(indexx, 1);
+      console.log(users);
        socket.emit("RefreshResponse", users);
     });
     socket.on("refresh",()=> {
