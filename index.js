@@ -13,6 +13,8 @@ app.use(express.json());
 
 var clients = {};
 var users = [];
+var description = new Map();
+var i = 0 ;
 
 
 io.on("connection", (socket) =>{
@@ -31,22 +33,22 @@ io.on("connection", (socket) =>{
         users.push(id);
     })
     socket.on("offer", (data)=>{
-      console.log(data);
-    })
-
-    socket.on("disconnectt", (userId) => {
-      console.log("Request to remove -> ");
-      //  let indexx = users.findIndex(userId);
-      //  console.log(indexx);
-      //  users.splice(indexx, 1);
-      console.log(users);
-       socket.emit("RefreshResponse", users);
-    });
+      //console.log("iterations " + data);
+      description.set(i, data);
+      i++;
+      //description = data.Map;
+      socket.broadcast.emit('broadcast', data  );             // Goes into switch statement in flutter call widget.
+      });
+    socket.on("reply", ()=>{
+        console.log(description.get(0));
+    });  
+     
+    
     socket.on("refresh",()=> {
       console.log("Refreshing")
       socket.emit("RefreshResponse", users);
     })
-});
+  });
 
 server.listen(port,"0.0.0.0", () => {
   console.log("Server Started on port :" + port);  
