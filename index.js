@@ -31,18 +31,25 @@ io.on("connection", (socket) =>{
       clients[id] = socket;
     //  console.log(clients);
         users.push(id);
-    })
+    });
+    socket.on("demo", (str)=>{console.log(str)});
+    
     socket.on("offer", (data)=>{
       //console.log("iterations " + data);
       description.set(i, data);
       i++;
-      //description = data.Map;
-      socket.broadcast.emit('broadcast', data  );             // Goes into switch statement in flutter call widget.
+      //console.log(description);
+      socket.broadcast.emit('broadcast', "Message received, turn the button blue" );             // Goes into switch statement in flutter call widget.
+      });
+
+      socket.on("getMeSdp", ()=>{
+        console.log(description.get(0));
+          socket.emit("givingSdp", description.get(0));
       });
     socket.on("reply", ()=>{
-        console.log(description.get(0));
-    });  
-     
+        //console.log(description);
+        socket.emit("answer", description);
+    }); 
     
     socket.on("refresh",()=> {
       console.log("Refreshing")
