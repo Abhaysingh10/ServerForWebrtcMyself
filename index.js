@@ -1,3 +1,4 @@
+const { fork } = require("child_process");
 const console = require("console");
 const { Socket } = require("dgram");
 const express = require("express");
@@ -13,24 +14,27 @@ app.use(express.json());
 
 var clients = {};
 var users = [];
+let peers = [];
 var description = new Map();
 var i = 0 ;
 
 
 io.on("connection", (socket) =>{
     socket.emit("remoteConnection", socket.id);
-    console.log("Connected");
-    //console.log("This is Socket -> ",socket);
-    socket.on("/test", (msg) => {
-            console.log(msg);
-            
-    })
+    console.log("Connected with " , socket.id);
     socket.on("connection", (id) =>{
-      console.log(id, " has joined");
+      //console.log(peers, " has joined");
+      let peer = {
+        id : socket.id,
+        userid : id
+      }
+      peers.push(peer);
+      console.log("This is peer added",peers);
       socket.emit("connectionResponse", users);
       clients[id] = socket;
     //  console.log(clients);
         users.push(id);
+
     });
     socket.on("demo", (str)=>{console.log(str)});
     
@@ -43,13 +47,45 @@ io.on("connection", (socket) =>{
       });
 
       socket.on("getMeSdp", ()=>{
-        console.log(description.get(0));
-          socket.emit("givingSdp", description.get(0));
+          socket.emit("offer", description.get(0));
+          socket.emit("givingCandidate", description.get(1));
       });
+      
     socket.on("reply", ()=>{
         //console.log(description);
         socket.emit("answer", description);
-    }); 
+    });
+    try {
+      socket.on("ans", (data)=>{
+        var obj = JSON.parse(data);
+        var value = obj.data.to;  // ------> Got the value of "to" to emit to offer sender
+       // console.log(users);
+        //console.log("Displaying the value in ans event", id);
+        for(var i = 0 ; i < users.length; i++ ){
+          if (users[i] == value) {
+            console.log("Got a hit");
+            io.to(value).emit("answerReplying", data);
+          } else {
+            console.log("Missed");
+          }
+        }
+        // for(let key in peers){
+        //   console.log(key);
+        //   console.log(peers[key]);
+        // }
+      });
+    } catch (error) {
+      console.log("This was the error" , error);
+    }
+   
+    socket.on("SendingpeerID", (peerId)=>{
+        console.log("This is peerId" , peerId);
+    });
+
+    // socket.on("answer", (answerData)=>{
+    //     console.log("Answer Data " , answerData);
+    // });
+    
     
     socket.on("refresh",()=> {
       console.log("Refreshing")
