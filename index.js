@@ -55,20 +55,22 @@ io.on("connection", (socket) =>{
         //console.log(description);
         socket.emit("answer", description);
     });
+    
     try {
       socket.on("ans", (data)=>{
         var obj = JSON.parse(data);
         var value = obj.data.to;  // ------> Got the value of "to" to emit to offer sender
        // console.log(users);
         //console.log("Displaying the value in ans event", id);
-        for(var i = 0 ; i < users.length; i++ ){
-          if (users[i] == value) {
-            console.log("Got a hit");
-            io.to(value).emit("answerReplying", data);
+        peers.forEach((element, index) =>{
+          if(element.userid == value) {
+            console.log("Got the element" ,element.id);
+            io.to(element.id).emit("ansResponse", value);
+        //  socket.emit("ansResponse", element.id)
           } else {
             console.log("Missed");
           }
-        }
+        });
         // for(let key in peers){
         //   console.log(key);
         //   console.log(peers[key]);
