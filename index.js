@@ -36,18 +36,16 @@ io.on("connection", (socket) =>{
         users.push(id);
 
     });
-    socket.on("demo", (str)=>{console.log(str)});
-    
+  
     socket.on("offer", (data)=>{
-      //console.log("iterations " + data);
       description.set(i, data);
       i++;
-      //console.log(description);
       socket.broadcast.emit('broadcast', "Message received, turn the button blue" );             // Goes into switch statement in flutter call widget.
       });
 
       socket.on("getMeSdp", ()=>{
-          socket.emit("offer", description.get(0));
+          //console.log("sending sdp" , description.get(0));
+          socket.emit("givingsdp", description.get(0));
           socket.emit("givingCandidate", description.get(1));
       });
       
@@ -65,7 +63,7 @@ io.on("connection", (socket) =>{
         peers.forEach((element, index) =>{
           if(element.userid == value) {
             console.log("Got the element" ,element.id);
-            io.to(element.id).emit("ansResponse", value);
+            socket.broadcast.to(element.id).emit("ansResponse", data);
         //  socket.emit("ansResponse", element.id)
           } else {
             console.log("Missed");
