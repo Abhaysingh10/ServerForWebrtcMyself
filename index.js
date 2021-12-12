@@ -20,9 +20,10 @@ var i = 0 ;
 
 
 io.on("connection", (socket) =>{
+   //console.log("Connected Successfully", socket.id)
     socket.emit("remoteConnection", socket.id);
     console.log("Connected with " , socket.id);
-    socket.on("connection", (id) =>{
+     socket.on("connection", (id) =>{
       //console.log(peers, " has joined");
       let peer = {
         id : socket.id,
@@ -32,7 +33,6 @@ io.on("connection", (socket) =>{
       console.log("This is peer added",peers);
       socket.emit("connectionResponse", users);
       clients[id] = socket;
-    //  console.log(clients);
         users.push(id);
 
     });
@@ -87,10 +87,14 @@ io.on("connection", (socket) =>{
     // });
     
     
+   socket.on('disconnect', function(socket) {
+    console.log(socket.id,'  Got disconnect!')});
+    
     socket.on("refresh",()=> {
       console.log("Refreshing")
+      console.log(users);
       socket.emit("RefreshResponse", users);
-    })
+    });
   });
 
 server.listen(port,"0.0.0.0", () => {
