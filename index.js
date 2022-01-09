@@ -15,14 +15,18 @@ app.use(express.json());
 var clients = {};
 var users = [];
 let peers = [];
-var description = new Map();
+var description =new Map();
 var i = 0 ;
-
-
+var peerId;
+var gotTheOffer = false;
+var gotThePeerId = false;
+var offerData;
+var answerData;
+var candy;
 io.on("connection", (socket) =>{
    //console.log("Connected Successfully", socket.id)
     socket.emit("remoteConnection", socket.id);
-    console.log("Connected with " , socket.id);
+   // console.log("Connected with " , socket.id);
      socket.on("connection", (id) =>{
       //console.log(peers, " has joined");
       let peer = {
@@ -33,15 +37,62 @@ io.on("connection", (socket) =>{
       console.log("This is peer added",peers);
       socket.emit("connectionResponse", users);
       clients[id] = socket;
-        users.push(id);
+      users.push(id);
 
     });
   
-    socket.on("offer", (data)=>{
-      description.set(i, data);
-      i++;
-      socket.broadcast.emit('broadcast', "Message received, turn the button blue" );             // Goes into switch statement in flutter call widget.
+    socket.on("offer", async (offerSdp)=>{
+      gotTheOffer = true;
+      offerData = offerSdp;
+     });
+
+     socket.on("answer", (answerSdp) => {
+      answerData = answerSdp;
+     })
+
+      socket.on("rec", (peerid) =>{
+        var offertosend;
+     //   console.log("This peer is received " , peerid);
+        peers.forEach(element => {
+
+          //console.log ("This is elementals ", element['id']);
+
+          if (element['userid'] == peerid) {
+         //   console.log("I have the user in list ", peerid, " ", element['userid']);
+        //    console.log("And this socketID associated with it ", element['id']);
+            gotThePeerId = true;
+            io.to(element['id']).emit('broadcastingMessagesdp', offerData);
+          }    
+        });
+      })
+
+      socket.on("recAns", (peerid) =>{
+        var offertosend;
+      //  console.log("This peer is received " , peerid);
+        peers.forEach(element => {
+
+          //console.log ("This is elementals ", element['id']);
+
+          if (element['userid'] == peerid) {
+           // console.log("I have the user in list ", peerid, " ", element['userid']);
+           // console.log("And this socketID associated with it ", element['id']);
+            gotThePeerId = true;
+            io.to(element['id']).emit('broadcastingMessagesdp', answerData);
+
+            io.to(element['id']).emit('recCandy', candy);
+          }    
+        });
+      })
+
+      socket.on("sendingCandidate", (candidate) => {
+        candy = candidate ;
+        console.log("I also got the candidate ", candidate);
       });
+
+      socket.on("_sendingPeerId", (data)=>{
+        peerId = data;
+        console.log("This is peerId received from client" , peerId);
+      })
 
       socket.on("getMeSdp", ()=>{
           //console.log("sending sdp" , description.get(0));
@@ -58,21 +109,16 @@ io.on("connection", (socket) =>{
       socket.on("ans", (data)=>{
         var obj = JSON.parse(data);
         var value = obj.data.to;  // ------> Got the value of "to" to emit to offer sender
-       // console.log(users);
-        //console.log("Displaying the value in ans event", id);
+ 
         peers.forEach((element, index) =>{
           if(element.userid == value) {
             console.log("Got the element" ,element.id);
             socket.broadcast.to(element.id).emit("ansResponse", data);
-        //  socket.emit("ansResponse", element.id)
           } else {
             console.log("Missed");
           }
         });
-        // for(let key in peers){
-        //   console.log(key);
-        //   console.log(peers[key]);
-        // }
+     
       });
     } catch (error) {
       console.log("This was the error" , error);
@@ -82,12 +128,8 @@ io.on("connection", (socket) =>{
         console.log("This is peerId" , peerId);
     });
 
-    // socket.on("answer", (answerData)=>{
-    //     console.log("Answer Data " , answerData);
-    // });
     
-    
-   socket.on('disconnect', function(socket) {
+   socket.on('disconnect', (socket) =>{
     console.log(socket.id,'  Got disconnect!')});
     
     socket.on("refresh",()=> {
