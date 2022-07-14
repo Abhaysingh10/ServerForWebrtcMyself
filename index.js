@@ -49,6 +49,7 @@ io.on("connection", (socket) => {
     clients[id] = socket;
     users.push(id);
     socket.broadcast.emit("broadcastingMessage", "some data")
+    console.log("pushing");
   });
 
   socket.on("offer", async (offerSdp) => {
